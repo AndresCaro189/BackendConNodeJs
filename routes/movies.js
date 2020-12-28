@@ -1,12 +1,138 @@
+const express = require("express");
+const MoviesServices = require('../services/movies');
+
+const{
+  movieIdSchema,
+  createMovieSchema,
+  updateMovieSchema
+} = require('../utils/schemas/movies')
+
+const validationHandler = require('../utils/middleware/validationHandler')
+
+const cacheResponse = require('../utils/cacheResponse')
+const { FIVE_MINUTES_IN_SECONDS, SIXTY_MINUTES_IN_SECONDS} = require('../utils/time')
+
+function moviesApi(app) {
+  const router = express.Router();
+  app.use("/api/movies", router);
+
+  const moviesService = new MoviesServices();
+
+  router.get("/", async function (req, res, next) {
+    cacheResponse(res, FIVE_MINUTES_IN_SECONDS);
+    const { tags } = req.query;
+    try {
+      const movies = await moviesService.getMovies({ tags });
+
+      res.status(200).json({
+        data: movies,
+        message: 'movies listed'
+      })
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  // Obtener movie por id
+  router.get("/:movieId", validationHandler({movieId: movieIdSchema}, 'params'), async function (req, res, next) {
+    cacheResponse(res, SIXTY_MINUTES_IN_SECONDS);
+    const { movieId } = req.params;
+    try {
+      const movies = await moviesService.getMovie({ movieId });
+      res.status(200).json({
+        data: movies,
+        message: 'movies retrieved'
+      })
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  // create
+  router.post("/", validationHandler(createMovieSchema), async function (req, res, next) {
+    const { body: movie } = req;
+    try {
+      const createdMovieId = await moviesService.createMovie({ movie })
+      res.status(201).json({
+        data: createdMovieId,
+        message: 'movie created'
+      })
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  // PUT - actualizar
+  router.put("/:movieId", validationHandler({movieId: movieIdSchema}, 'params'), validationHandler(updateMovieSchema), async function (req, res, next) {
+    const { movieId } = req.params;
+    const { body: movie } = req;
+    try {
+      const updatedMovieId = await moviesService.updateMovie({ movieId, movie })
+      res.status(200).json({
+        data: updatedMovieId,
+        message: 'movie updated'
+      })
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  // delete
+  router.delete("/:movieId", validationHandler({movieId: movieIdSchema}, 'params'), async function (req, res, next) {
+    const { movieId } = req.params;
+    const { body: movie } = req;
+    try {
+      const deleteMovieId = await moviesService.deletedMovie({movie, movieId});
+      res.status(200).json({
+        data: deleteMovieId,
+        message: 'movies deleted'
+      })
+    } catch (error) {
+      next(error);
+    }
+  })
+
+  router.patch('/:movieId', async function(req, res, next) {
+    const { movieId } = req.params;
+    const { body: movie } = req;
+    try {
+      const partialMovieId = await moviesServices.updatePartialMovie({
+        movieId,
+        movie
+      });
+      res
+        .status(200)
+        .json({ data: partialMovieId, message: 'movie updated partially' });
+    } catch (err) {
+      next(err);
+    }
+  });
+}
+// Ahora tenemos que exportarla, porque aquí estamos definiendo la ruta pero no la estamos usando
+// en nuestra aplicación de express
+
+  module.exports = moviesApi;
+
+
+
+
+
+
+
+
+
+
+/*
 /**
  * Para crear una ruta necesitamos de express pues es quien nos define el router
- */
+
 const express = require("express");
+
 const { moviesMock } = require("../utils/mocks/movies");
 
 /** vamos a recibir una aplicación de express, lo que nos permite ser dinamicos y obtener el control,
  * sobre que aplicación va a consumir nuestra ruta.
-*/
+
 
 function moviesApi(app) {
   // creamos el router
@@ -21,7 +147,7 @@ function moviesApi(app) {
      clave async, recuerden que una ruta recibe el request, el response object y en este caso vamos a 
      recibir la funcionalidad next, esto hace parte de la teoria de middleware que vamos a explicar 
      más adelante
-  */
+
   router.get("/", async function (req, res, next) {
     // como es código asincron es muy importante utilizar el try catch
     try {
