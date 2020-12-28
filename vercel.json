@@ -14,9 +14,9 @@
     }
   ],
   "env": {
-    "DB_USER": "db_user_platzivideos",
-    "DB_PASSWORD": "0GvyHeX8koReL5US",
-    "DB_HOST": "cluster0.ndqfy.mongodb.net/test",
-    "DB_NAME": "platzyVideo"
+    "DB_USER": "@platzivideos-db-user",
+    "DB_PASSWORD": "@platzivideos-db-password",
+    "DB_HOST": "@platzivideos-db-host",
+    "DB_NAME": "@platzivideos-db-name"
   }
 }
